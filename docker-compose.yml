@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  proxy:
+    image: nginxproxy/nginx-proxy:latest
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    networks:
+      - frontend
+      - backend
+
+  wikijs:
+    image: requarks/wiki:2.5
+    volumes:
+      - ./documents:/usr/share/nginx/html
+    networks:
+      - backend
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+    environment:
+      - VIRTUAL_HOST=wiki.example.com
+      - VIRTUAL_PORT=3000
+      - DB_TYPE=postgres
+      - DB_HOST=pgpool
+      - DB_PORT=5432
+      - DB_USER=test
+      - DB_PASS=changeme
+      - DB_NAME=test
+      - HA_ACTIVE=true
+
+  pgpool:
+    image: bitnami/pgpool:latest
+    networks:
+      - backend
+    environment:
+      - PGPOOL_BACKEND_NODES=0:pg-0:5432,1:pg-1:5432
+      - PGPOOL_SR_CHECK_USER=test
+      - PGPOOL_SR_CHECK_PASSWORD=changeme
+      - PGPOOL_POSTGRES_USERNAME=test
+      - PGPOOL_POSTGRES_PASSWORD=changeme
+      - PGPOOL_ADMIN_USERNAME=test
+      - PGPOOL_ADMIN_PASSWORD=changeme
+
+  pg-0:
+    image: bitnami/postgresql-repmgr:latest
+    networks:
+      - backend
+    volumes:
+      - ./pg-0:/bitnami/postgresql
+    environment:
+      - POSTGRESQL_PASSWORD=changeme
+      - POSTGRESQL_USERNAME=test
+      - POSTGRESQL_DATABASE=test
+      - REPMGR_PASSWORD=changeme
+      - REPMGR_PRIMARY_HOST=pg-0
+      - REPMGR_NODE_NAME=pg-0
+      - REPMGR_NODE_NETWORK_NAME=pg-0
+      - REPMGR_PARTNER_NODES=pg-0,pg-1
+
+  pg-1:
+    image: bitnami/postgresql-repmgr:latest
+    networks:
+      - backend
+    volumes:
+      - ./pg-1:/bitnami/postgresql
+    environment:
+      - POSTGRESQL_PASSWORD=changeme
+      - POSTGRESQL_USERNAME=test
+      - POSTGRESQL_DATABASE=test
+      - REPMGR_PASSWORD=changeme
+      - REPMGR_PRIMARY_HOST=pg-0
+      - REPMGR_NODE_NAME=pg-1
+      - REPMGR_NODE_NETWORK_NAME=pg-1
+      - REPMGR_PARTNER_NODES=pg-0,pg-1
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
