@@ -11,6 +11,10 @@ Tämä repo on HAMKin Pilvipalvelut kurssin docker ympäristötehtävän toteutu
 
 Tehtävässä piti luoda kokonainen docker-pohjainen mikropalveluympäristö, jolla tarjotaan palvelu, jossa kuvataan ympäristön luominen.
 
+Toteutin tehtävän Wiki.JS sisällönhallintatyökalua käyttämällä. Sen taustalle rakensin varmennetun tietokantarakenteen ja edustalle reverse proxyn.
+
+![Ruudunkaappaus](img/screen1.png)
+
 ## Asennus
 
 Lataa paketti palvelimelle komennolla
