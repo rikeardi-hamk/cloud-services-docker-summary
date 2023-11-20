@@ -13,7 +13,7 @@ Tehtävässä piti luoda kokonainen docker-pohjainen mikropalveluympäristö, jo
 
 Toteutin tehtävän Wiki.JS sisällönhallintatyökalua käyttämällä. Sen taustalle rakensin varmennetun tietokantarakenteen ja edustalle reverse proxyn.
 
-![Ruudunkaappaus](img/screen1.png)
+![Ruudunkaappaus](img/screen.png)
 
 ## Asennus
 
