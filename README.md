@@ -18,10 +18,16 @@ Lataa paketti palvelimelle komennolla
 git clone https://github.com/rikeardi-hamk/cloud-services-docker-summary.git
 ```
 
-Siirry ladattuun kansioon ja aja docker compose
+Siirry ladattuun kansioon ja luo kansiot tietokannoille sekä aseta niiden käyttöoikeudet.
 ```
 cd cloud-services-docker-summary
 
+mkdir pg-{0,1}
+chown 1001:0 pg-{0,1}
+```
+
+Aja docker compose
+```
 docker compose up -d
 ```
 
