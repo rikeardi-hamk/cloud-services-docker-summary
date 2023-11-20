@@ -14,8 +14,6 @@ services:
 
   wikijs:
     image: requarks/wiki:2.5
-    volumes:
-      - ./documents:/usr/share/nginx/html
     networks:
       - backend
     deploy:
@@ -23,14 +21,21 @@ services:
       restart_policy:
         condition: on-failure
     environment:
-      - VIRTUAL_HOST=wiki.example.com
+      - VIRTUAL_HOST=wiki.colasloth.com
+#      IF WE WANT TO USE SSL INSTEAD, WE NEED TO COMMENT THE PREVIOUS LINE AND UNCOMMENT THE FOLLOWING LINES
+#      - VIRTUAL_PROTO=https
+#      - VIRTUAL_PORT=3443
+#      - SSL_ACTIVE=true
+#      - LETSENCRYPT_DOMAIN=wiki.colasloth.com
+#      - LETSENCRYPT_EMAIL=admin@colasloth.com
+#     ALSO COMMENT THE FOLLOWING LINE WHEN USING SSL.
       - VIRTUAL_PORT=3000
       - DB_TYPE=postgres
       - DB_HOST=pgpool
       - DB_PORT=5432
-      - DB_USER=test
-      - DB_PASS=changeme
-      - DB_NAME=test
+      - DB_USER=wikiuser
+      - DB_PASS=wikipassword
+      - DB_NAME=wikidb
       - HA_ACTIVE=true
 
   pgpool:
@@ -39,12 +44,21 @@ services:
       - backend
     environment:
       - PGPOOL_BACKEND_NODES=0:pg-0:5432,1:pg-1:5432
-      - PGPOOL_SR_CHECK_USER=test
-      - PGPOOL_SR_CHECK_PASSWORD=changeme
-      - PGPOOL_POSTGRES_USERNAME=test
-      - PGPOOL_POSTGRES_PASSWORD=changeme
-      - PGPOOL_ADMIN_USERNAME=test
-      - PGPOOL_ADMIN_PASSWORD=changeme
+      - PGPOOL_SR_CHECK_USER=repmgr
+      - PGPOOL_SR_CHECK_PASSWORD=repmgrpassword
+      - PGPOOL_ENABLE_LDAP=no
+      - PGPOOL_POSTGRES_USERNAME=postgres
+      - PGPOOL_POSTGRES_PASSWORD=adminpassword
+      - PGPOOL_ADMIN_USERNAME=admin
+      - PGPOOL_ADMIN_PASSWORD=adminpassword
+      - PGPOOL_ENABLE_LOAD_BALANCING=yes
+      - PGPOOL_POSTGRES_CUSTOM_USERS=wikiuser
+      - PGPOOL_POSTGRES_CUSTOM_PASSWORDS=wikipassword
+    healthcheck:
+      test: ["CMD", "/opt/bitnami/scripts/healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   pg-0:
     image: bitnami/postgresql-repmgr:latest
@@ -52,15 +66,20 @@ services:
       - backend
     volumes:
       - ./pg-0:/bitnami/postgresql
+      - ./wiki.sql:/docker-entrypoint-initdb.d/wiki.sql
     environment:
-      - POSTGRESQL_PASSWORD=changeme
-      - POSTGRESQL_USERNAME=test
-      - POSTGRESQL_DATABASE=test
-      - REPMGR_PASSWORD=changeme
+      - POSTGRESQL_POSTGRES_PASSWORD=adminpassword
+      - POSTGRESQL_PASSWORD=wikipassword
+      - POSTGRESQL_USERNAME=wikiuser
+      - POSTGRESQL_DATABASE=wikidb
+      - POSTGRESQL_NUM_SYNCHRONOUS_REPLICAS=1
       - REPMGR_PRIMARY_HOST=pg-0
       - REPMGR_NODE_NAME=pg-0
       - REPMGR_NODE_NETWORK_NAME=pg-0
       - REPMGR_PARTNER_NODES=pg-0,pg-1
+      - REPMGR_USERNAME=repmgr
+      - REPMGR_PASSWORD=repmgrpassword
+      - PASSWORD_AUTHENTICATION=md5
 
   pg-1:
     image: bitnami/postgresql-repmgr:latest
@@ -69,14 +88,18 @@ services:
     volumes:
       - ./pg-1:/bitnami/postgresql
     environment:
-      - POSTGRESQL_PASSWORD=changeme
-      - POSTGRESQL_USERNAME=test
-      - POSTGRESQL_DATABASE=test
-      - REPMGR_PASSWORD=changeme
+      - POSTGRESQL_POSTGRES_PASSWORD=adminpassword
+      - POSTGRESQL_PASSWORD=wikipassword
+      - POSTGRESQL_USERNAME=wikiuser
+      - POSTGRESQL_DATABASE=wikidb
+      - POSTGRESQL_NUM_SYNCHRONOUS_REPLICAS=1
       - REPMGR_PRIMARY_HOST=pg-0
       - REPMGR_NODE_NAME=pg-1
       - REPMGR_NODE_NETWORK_NAME=pg-1
       - REPMGR_PARTNER_NODES=pg-0,pg-1
+      - REPMGR_USERNAME=repmgr
+      - REPMGR_PASSWORD=repmgrpassword
+      - PASSWORD_AUTHENTICATION=md5
 
 networks:
   frontend:
